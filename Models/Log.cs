@@ -13,7 +13,7 @@ public partial class Log
 
     public string Activity { get; set; }
 
-    public string Coment { get; set; }
+    public string Comment { get; set; }
 
     public virtual User User { get; set; }
 }

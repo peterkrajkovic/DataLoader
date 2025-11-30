@@ -96,6 +96,36 @@ namespace DataLoader
             return start.AddSeconds(randomSeconds);
         }
 
+        public async static Task<bool> CreateFollows(int followCount)
+        {
+            try
+            {
+                var db = new DatabaseContext();
+                var users = db.Users.ToList();
+                Random random = new Random();
+                for (int i = 0; i < followCount; i++)
+                {
+                    var follower = users[random.Next(users.Count)];
+                    var alreadyFollowed = db.Followers.Where(u => u.FollowerId == follower.UserId).Select(u => u.FollowedId).ToList();
+                    var followedCandidates = users
+                        .Where(u => u.UserId != follower.UserId && !alreadyFollowed.Contains(u.UserId))        // exclude self
+                        .OrderBy(u => random.Next())        // shuffle
+                        .Take(1)
+                        .ToList();
+                    var followed = followedCandidates[0];
+                    var startDate = new[] { follower.CreatedAt ?? DateTime.UtcNow, followed.CreatedAt ?? DateTime.UtcNow }.Min();
+                    db.Followers.Add(
+                        new Follower() { FollowerId = follower.UserId, FollowedId = followed.UserId, FollowedAt = RandomDate(startDate, DateTime.Now) });
+                    db.SaveChanges();
+                    
+                }
+                return true;
+
+            } catch (Exception _)
+            {
+                return false;
+            }
+        }
 
         public async static Task<bool> CreateGroups(int groupCount, int minMembers, int maxMembers)
         {
@@ -106,10 +136,12 @@ namespace DataLoader
                 Random random = new Random();
                 for (int i = 0; i < groupCount; i++)
                 {
+                    var user = users[random.Next(users.Count)];
                     var group = new Group
                     {
                         Name = $"{adjectives[random.Next(adjectives.Count)]} {nouns[random.Next(nouns.Count)]}",
-                        CreatedAt = RandomDate(users.Min(u => u.CreatedAt) ?? DateTime.Now, DateTime.UtcNow),
+                        CreatedBy = user.UserId,
+                        CreatedAt = RandomDate(user.CreatedAt ?? DateTime.Now, DateTime.UtcNow),
                     };
                     db.Groups.Add(group);
                     db.SaveChanges();
@@ -165,7 +197,7 @@ namespace DataLoader
                     var messageDate = new[] { sender.CreatedAt ?? DateTime.UtcNow, recipient.CreatedAt ?? DateTime.UtcNow }.Min();
                     string message = GetRandomMessage();
                     db.Messages.Add(
-                        new Message() { Sender = sender, Receiver = recipient, SentAt = messageDate, Content = message, StatusId = random.Next(1, 6) });
+                        new Message() { Sender = sender, Receiver = recipient, SentAt = messageDate, Content = message, StatusId = random.Next(1, 4) });
 
                     db.SaveChanges();
                 }
@@ -181,6 +213,7 @@ namespace DataLoader
             try
             {
                 var db = new DatabaseContext();
+
                 var groups = db.Groups.ToList();
 
                 for (int i = 0; i < messageCount; i++)
@@ -236,7 +269,7 @@ namespace DataLoader
                 // List to store new followers
                 var newFollowers = new List<Follower>();
 
-                for (int i = 0; i < userCount; i++)
+                for (int i = 0; i < Math.Min(users.Count(), userCount); i++)
                 {
                     {
                         // Determine how many people this user will follow
@@ -320,8 +353,8 @@ namespace DataLoader
                     }
                     foreach (var user in users)
                     {
-                        //user.ProfilePhoto = photoBytes;
-                        //db.SaveChanges();
+                        user.ProfilePhoto = photoBytes;
+                        db.SaveChanges();
                     }
                 } while (users.Any());
             }
@@ -332,19 +365,19 @@ namespace DataLoader
             return true;
         }
 
-        public static async Task<bool> CreatePosts()
+        public static async Task<bool> CreatePosts(int postsCount)
         {
             try
             {
                 var db = new DatabaseContext();
                 var users = db.Users.Take(100).ToList();
-                for (int i = 1; i < 100; i++)
+                for (int i = 1; i < postsCount; i++)
                 {
                     var user = users[random.Next(users.Count)];
                     var postDate = RandomDate(user.CreatedAt ?? DateTime.Now, DateTime.Now);
                     string message = GetRandomMessage();
                     db.Posts.Add(
-                        new Post() { PostId = i, UserId = user.UserId, CreatedAt = postDate, PostComment = message, Photo = GetProfilePhoto() });
+                        new Post() { UserId = user.UserId, CreatedAt = postDate, PostComment = message, Photo = null });
                     db.SaveChanges();
                 }
             }
@@ -363,13 +396,16 @@ namespace DataLoader
                 var posts = db.Posts.ToList();
                 for (int i = 0; i < likeCount; i++)
                 {
-                    var users = db.Users
-                        .OrderBy(u => Guid.NewGuid())
-                        .Take(1)
-                        .ToList();
-
-                    var user = users[0];
+                    
                     var post = posts[random.Next(posts.Count)];
+                    var users = db.Users.Where(u => u.CreatedAt < post.CreatedAt).ToList();
+                    if (users.Count() == 0)
+                    {
+                        i--;
+                        continue;
+                    }
+
+                    var user = users[random.Next(users.Count())];
                     var likeDate = new[] { user.CreatedAt ?? DateTime.UtcNow, post.CreatedAt ?? DateTime.UtcNow }.Min();
                     db.Likes.Add(
                         new Like() { UserId = user.UserId, PostId = post.PostId, CreatedAt = RandomDate(likeDate, DateTime.Now) });
@@ -391,13 +427,16 @@ namespace DataLoader
                 var posts = db.Posts.ToList();
                 for (int i = 0; i < commentCount; i++)
                 {
-                    var users = db.Users
-                        .OrderBy(u => Guid.NewGuid())
-                        .Take(1)
-                        .ToList();
-
-                    var user = users[0];
+                  
                     var post = posts[random.Next(posts.Count)];
+                    var users = db.Users.Where(u => u.CreatedAt < post.CreatedAt).ToList();
+                    if (users.Count() == 0)
+                    {
+                        i--;
+                        continue;
+                    }
+                    var user = users[random.Next(users.Count())];
+
                     var commentDate = new[] { user.CreatedAt ?? DateTime.UtcNow, post.CreatedAt ?? DateTime.UtcNow }.Min();
                     db.Comments.Add(
                         new Comment() { UserId = user.UserId, PostId = post.PostId, CreatedAt = RandomDate(commentDate, DateTime.Now), Content = GetRandomMessage() });

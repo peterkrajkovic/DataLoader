@@ -14,12 +14,11 @@ public partial class DatabaseContext : DbContext
     }
 
     public DatabaseContext()
-     : base(new DbContextOptionsBuilder<DatabaseContext>()
-         .UseOracle("User Id=SOCIALNA_SIET;Password=Qwert123;Data Source=192.168.192.172:1521;")
-         .Options)
+         : base(new DbContextOptionsBuilder<DatabaseContext>()
+             .UseOracle("User Id=SOCIALNA_SIET;Password=Qwert123;Data Source=192.168.192.172:1521/FREEPDB1;")
+             .Options)
     {
     }
-
 
     public virtual DbSet<BlockedUser> BlockedUsers { get; set; }
 
@@ -55,7 +54,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<BlockedUser>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("SYS_C008327");
+            entity.HasKey(e => e.Id).HasName("SYS_C008900");
 
             entity.ToTable("BLOCKED_USERS");
 
@@ -90,7 +89,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<CloseFriend>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("SYS_C008333");
+            entity.HasKey(e => e.Id).HasName("SYS_C008906");
 
             entity.ToTable("CLOSE_FRIENDS");
 
@@ -121,7 +120,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<Comment>(entity =>
         {
-            entity.HasKey(e => e.CommentId).HasName("SYS_C008339");
+            entity.HasKey(e => e.CommentId).HasName("SYS_C008912");
 
             entity.ToTable("COMMENTS");
 
@@ -156,7 +155,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<Follower>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("SYS_C008345");
+            entity.HasKey(e => e.Id).HasName("SYS_C008918");
 
             entity.ToTable("FOLLOWERS");
 
@@ -191,7 +190,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<Group>(entity =>
         {
-            entity.HasKey(e => e.GroupId).HasName("SYS_C008350");
+            entity.HasKey(e => e.GroupId).HasName("SYS_C008923");
 
             entity.ToTable("GROUPS");
 
@@ -222,7 +221,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<GroupMember>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("SYS_C008355");
+            entity.HasKey(e => e.Id).HasName("SYS_C008928");
 
             entity.ToTable("GROUP_MEMBERS");
 
@@ -257,7 +256,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<GroupMessage>(entity =>
         {
-            entity.HasKey(e => e.MessageId).HasName("SYS_C008394");
+            entity.HasKey(e => e.MessageId).HasName("SYS_C008967");
 
             entity.ToTable("GROUP_MESSAGES");
 
@@ -291,16 +290,16 @@ public partial class DatabaseContext : DbContext
             entity.HasOne(d => d.Sender).WithMany(p => p.GroupMessages)
                 .HasForeignKey(d => d.SenderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_GROUP_MESSAGES_SENDER");
+                .HasConstraintName("FK__MESSAGES_SENDER");
 
             entity.HasOne(d => d.Status).WithMany(p => p.GroupMessages)
                 .HasForeignKey(d => d.StatusId)
-                .HasConstraintName("FK_GROUP_MESSAGES_STATUS");
+                .HasConstraintName("FK__MESSAGES_STATUS");
         });
 
         modelBuilder.Entity<Like>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("SYS_C008361");
+            entity.HasKey(e => e.Id).HasName("SYS_C008934");
 
             entity.ToTable("LIKES");
 
@@ -331,7 +330,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<Log>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("SYS_C008365");
+            entity.HasKey(e => e.Id).HasName("SYS_C008938");
 
             entity.ToTable("LOG");
 
@@ -343,10 +342,10 @@ public partial class DatabaseContext : DbContext
                 .HasMaxLength(200)
                 .IsUnicode(false)
                 .HasColumnName("ACTIVITY");
-            entity.Property(e => e.Coment)
+            entity.Property(e => e.Comment)
                 .HasMaxLength(200)
                 .IsUnicode(false)
-                .HasColumnName("COMENT");
+                .HasColumnName("COMMENT");
             entity.Property(e => e.UserId)
                 .HasColumnType("NUMBER")
                 .HasColumnName("USER_ID");
@@ -358,7 +357,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<Message>(entity =>
         {
-            entity.HasKey(e => e.MessageId).HasName("SYS_C008374");
+            entity.HasKey(e => e.MessageId).HasName("SYS_C008947");
 
             entity.ToTable("MESSAGES");
 
@@ -401,7 +400,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<MessageStatus>(entity =>
         {
-            entity.HasKey(e => e.StatusId).HasName("SYS_C008369");
+            entity.HasKey(e => e.StatusId).HasName("SYS_C008942");
 
             entity.ToTable("MESSAGE_STATUS");
 
@@ -418,7 +417,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<Post>(entity =>
         {
-            entity.HasKey(e => e.PostId).HasName("SYS_C008322");
+            entity.HasKey(e => e.PostId).HasName("SYS_C008895");
 
             entity.ToTable("POSTS");
 
@@ -451,16 +450,18 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("SYS_C008320");
+            entity.HasKey(e => e.UserId).HasName("SYS_C008893");
 
             entity.ToTable("USERS");
-
-            entity.HasIndex(e => e.Email, "USERS_EMAIL_UNIQUE").IsUnique();
 
             entity.Property(e => e.UserId)
                 .ValueGeneratedOnAdd()
                 .HasColumnType("NUMBER")
                 .HasColumnName("USER_ID");
+            entity.Property(e => e.Address)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("ADDRESS");
             entity.Property(e => e.Bio)
                 .HasMaxLength(200)
                 .IsUnicode(false)
@@ -481,9 +482,9 @@ public partial class DatabaseContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("PASSWORD");
-            //entity.Property(e => e.ProfilePhoto)
-            //    .HasColumnType("BLOB")
-            //    .HasColumnName("PROFILE_PHOTO");
+            entity.Property(e => e.ProfilePhoto)
+                .HasColumnType("BLOB")
+                .HasColumnName("PROFILE_PHOTO");
             entity.Property(e => e.Username)
                 .IsRequired()
                 .HasMaxLength(50)
